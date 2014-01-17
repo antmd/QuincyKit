@@ -134,6 +134,9 @@ typedef enum CrashReportStatus {
 
 // Notify delegate that UI will show (e.g. to unhide this app)
 -(void)uiWillBeShown;
+
+// Notify delegate when crash reporting has completed
+-(void)crashReportingCompleted;
 @end
 
 
@@ -145,7 +148,7 @@ typedef enum CrashReportStatus {
 /*==================================================================================================
  */
 
-@interface BWQuincyManager : NSObject <NSXMLParserDelegate>
+@interface BWQuincyManager : NSObject <NSXMLParserDelegate,NSURLConnectionDelegate>
 
 - (NSString*) modelVersion;
 
@@ -160,6 +163,9 @@ typedef enum CrashReportStatus {
 
 // defines the company name to be shown in the crash reporting dialog
 @property (nonatomic, copy) NSString *companyName;
+
+// The icon to be displayed in the UI. Should by 64x64
+@property (nonatomic, copy) NSImage* icon;
 
 // delegate is required
 @property (nonatomic, weak) id <BWQuincyManagerDelegate> delegate;
@@ -198,4 +204,5 @@ typedef enum CrashReportStatus {
 @property (nonatomic,readonly) NSString *reportBundleVersionString;
 @property (nonatomic,readonly) NSString *reportBundleVersion;
 @property (nonatomic,readonly) NSString *reportBundleIdentifier;
+@property (nonatomic,readonly) NSImage  *reportBundleIcon;
 @end

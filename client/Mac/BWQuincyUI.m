@@ -33,11 +33,6 @@
 
 #define CRASHREPORTSENDER_MAX_CONSOLE_SIZE 50000
 
-@interface BWQuincyUI (private)
-- (void)askCrashReportDetails;
-- (void)endCrashReporter;
-@end
-
 const CGFloat kCommentsHeight = 105;
 const CGFloat kDetailsHeight = 285;
 
@@ -57,8 +52,9 @@ const CGFloat kDetailsHeight = 285;
         _crashFile = crashFile;
         _companyName = companyName;
         _applicationName = applicationName;
+        self.icon = quincyManager.reportBundleIcon;
         [self setShowComments:YES];
-        [self setShowDetails:NO];
+        [self setShowDetails:YES];
 
     }
     return self;
@@ -70,25 +66,25 @@ const CGFloat kDetailsHeight = 285;
     crashLogTextView.editable = NO;
     crashLogTextView.selectable = NO;
     crashLogTextView.automaticSpellingCorrectionEnabled = NO;
+    crashLogTextView.typingAttributes = @{NSFontAttributeName:[NSFont userFixedPitchFontOfSize:11.0]};
 }
 
 
-- (void)endCrashReporter { [self close]; }
+- (void)endCrashReporter {
+    [self close];
+}
 
 
 - (IBAction)showComments:(id)sender
 {
 
     if ([sender intValue]) {
-        [self setShowComments:NO];
-
+        self.showComments=NO;
         self.commentTextFieldHeightConstraint.animator.constant = kCommentsHeight;
-
-        [self setShowComments:YES];
+        self.showComments=YES;
     }
     else {
-        [self setShowComments:NO];
-
+        self.showComments=NO;
         self.commentTextFieldHeightConstraint.animator.constant = 0;
     }
 }
@@ -96,7 +92,22 @@ const CGFloat kDetailsHeight = 285;
 
 - (IBAction)showDetails:(id)sender
 {
-    [self setShowDetails:YES];
+    if ([sender intValue]) {
+        self.showDetails = NO;
+        self.detailsScrollView.hidden = NO;
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+            self.detailScrollViewHeightConstraint.animator.constant = kDetailsHeight;
+        } completionHandler:nil ];
+        self.showDetails = YES;
+    }
+    else {
+        self.showDetails = NO;
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+            self.detailScrollViewHeightConstraint.animator.constant = 0;
+        } completionHandler:^{
+            self.detailsScrollView.hidden = YES;
+        } ];
+    }
 }
 
 
@@ -145,14 +156,6 @@ const CGFloat kDetailsHeight = 285;
                                                                          @"Window title"),
                                                        _applicationName]];
 
-    [[descriptionTextField cell]
-            setPlaceholderString:NSLocalizedString(
-                                         @"Please describe any steps needed to trigger the problem",
-                                         @"User description placeholder")];
-    [noteText setStringValue:NSLocalizedString(
-                                     @"No personal information will be sent with this report.",
-                                     @"Note text")];
-
     // get the crash log
     NSString *crashLogs = [NSString stringWithContentsOfFile:_crashFile
                                                     encoding:NSUTF8StringEncoding
@@ -197,24 +200,32 @@ const CGFloat kDetailsHeight = 285;
 
 
     NSBeep();
-    //    [NSApp runModalForWindow:[self window]];
-    [self.window makeKeyAndOrderFront:self];
+    [NSApp runModalForWindow:self.window];
 }
 
 
+/*
+ *
+ *
+ *================================================================================================*/
+#pragma mark - NSWindow Delegate
+/*==================================================================================================
+ */
+-(BOOL)windowShouldClose:(id)sender
+{
+    [NSApp stopModal];
+    [_quincyManager cancelReport];
+    return YES;
+}
 
-- (BOOL)showComments { return showComments; }
+/*
+ *
+ *
+ *================================================================================================*/
+#pragma mark - NSTextField Delegate
+/*==================================================================================================
+ */
 
-
-- (void)setShowComments:(BOOL)value { showComments = value; }
-
-
-- (BOOL)showDetails { return showDetails; }
-
-
-- (void)setShowDetails:(BOOL)value { showDetails = value; }
-
-#pragma mark NSTextField Delegate
 
 - (BOOL)control:(NSControl *)control
                    textView:(NSTextView *)textView

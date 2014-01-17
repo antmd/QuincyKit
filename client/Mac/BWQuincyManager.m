@@ -80,6 +80,8 @@
   NSMutableString   *_contentOfProperty;
   NSString   *_crashFile;
   BWQuincyUI *_quincyUI;
+  NSMutableData  *_receivedData;
+    NSURLConnection *_urlConnection;
 }
 
 @synthesize delegate = _delegate;
@@ -341,7 +343,11 @@
 
 
 
-- (void)cancelReport { [self returnToMainApplication]; }
+- (void)cancelReport {
+    LOG_INFO(@"User cancelled crash report.");
+    [self returnToMainApplication];
+    [ self _cleanupConnectionAndNotifyDelegate];
+}
 
 
 - (void)sendReportCrash:(NSString *)crashContent description:(NSString *)notes
@@ -436,18 +442,57 @@
     _serverResult = CrashReportStatusUnknown;
     _statusCode = 200;
 
-    NSHTTPURLResponse *response = nil;
-    NSError *error = nil;
+    _receivedData = [NSMutableData new];
+    _urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self ];
+                    
+}
 
-    NSData *responseData = nil;
-    responseData = [NSURLConnection sendSynchronousRequest:request
-                                         returningResponse:&response
-                                                     error:&error];
+/*
+ *
+ *
+ *================================================================================================*/
+#pragma mark - NSURLConnectionDelegate
+/*==================================================================================================
+ */
+- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)urlResponse
+{
+    // This method is called when the server has determined that it
+    // has enough information to create the NSURLResponse object.
+    
+    // It can be called multiple times, for example in the case of a
+    // redirect, so each time we reset the data.
+    
+    // receivedData is an instance variable declared elsewhere.
+    NSHTTPURLResponse* response = (NSHTTPURLResponse*)urlResponse;
     _statusCode = [response statusCode];
+    LOG_INFO(@"Received status code %lu from server.", _statusCode);
+    
+    [_receivedData setLength:0];
+}
 
-    if (responseData != nil) {
-        if (_statusCode >= 200 && _statusCode < 400) {
-            NSXMLParser *parser = [[NSXMLParser alloc] initWithData:responseData];
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
+{
+    // Append the new data to receivedData.
+    // receivedData is an instance variable declared elsewhere.
+    [_receivedData appendData:data];
+    LOG_DEBUG(@"Received %lu bytes.",data.length);
+}
+
+- (void)connection:(NSURLConnection *)connection
+  didFailWithError:(NSError *)error
+{
+    
+    LOG_ERROR(@"Connection failed! Error - %@ %@",
+          [error localizedDescription],
+          [[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey]);
+    [self _cleanupConnectionAndNotifyDelegate];
+}
+
+- (void)connectionDidFinishLoading:(NSURLConnection *)connection
+{
+    LOG_INFO(@"Succeeded! Received %lu bytes of data",[_receivedData length]);
+    if (_receivedData != nil && _receivedData.length > 0) {
+            NSXMLParser *parser = [[NSXMLParser alloc] initWithData:_receivedData];
             // Set self as the delegate of the parser so that it will receive the parser delegate
             // methods callbacks.
             [parser setDelegate:self];
@@ -456,13 +501,21 @@
             [parser setShouldProcessNamespaces:NO];
             [parser setShouldReportNamespacePrefixes:NO];
             [parser setShouldResolveExternalEntities:NO];
-
+            
             [parser parse];
-        }
+        LOG_INFO(@"Server result = %d",_serverResult);
     }
+    [self _cleanupConnectionAndNotifyDelegate];
 }
 
-
+-(void)_cleanupConnectionAndNotifyDelegate
+{
+    _urlConnection = nil;
+    _receivedData = nil;
+    if ([self.delegate respondsToSelector:@selector(crashReportingCompleted)]) {
+        [self.delegate crashReportingCompleted];
+    }
+}
 /*
  *
  *
@@ -548,6 +601,16 @@
 
 - (NSString *)reportBundleIdentifier
 { return [self _infoPlistValueForBundle:_reportBundle withKey:@"CFBundleIdentifier"]; }
+
+- (NSImage*)reportBundleIcon
+{
+    if (self.icon) {
+        return self.icon;
+    }
+    NSString* iconName = _reportBundle.infoDictionary[@"CFBundleIconFile"];
+    NSString* iconPath = [ _reportBundle pathForImageResource:iconName ];
+    return [[ NSImage alloc] initByReferencingFile:iconPath ];
+}
 
 - (void)_logAtLevel:(BWLogLevel)level message:(NSString *)message
 {

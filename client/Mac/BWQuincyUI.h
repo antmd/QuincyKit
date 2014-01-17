@@ -31,7 +31,7 @@
 
 @class BWQuincyManager;
 
-@interface BWQuincyUI : NSWindowController {
+@interface BWQuincyUI : NSWindowController<NSWindowDelegate> {
   IBOutlet NSTextField  *descriptionTextField;
   IBOutlet NSTextView   *crashLogTextView;
 
@@ -53,8 +53,6 @@
   NSMutableString   *_consoleContent;
   NSString      *_crashLogContent;
   
-  BOOL showComments;
-  BOOL showDetails;
 }
 
 - (id)initWithManager:(BWQuincyManager *)quincyManager crashFile:(NSString *)crashFile companyName:(NSString *)companyName applicationName:(NSString *)applicationName;
@@ -66,12 +64,16 @@
 - (IBAction) showDetails:(id)sender;
 - (IBAction) hideDetails:(id)sender;
 - (IBAction) showComments:(id)sender;
+- (IBAction) showDetails:(id)sender;
 
-- (BOOL)showComments;
-- (void)setShowComments:(BOOL)value;
+@property (nonatomic) BOOL showComments;
+@property (nonatomic) BOOL showDetails;
+@property (strong) IBOutlet NSScrollView *detailsScrollView;
+@property (copy,nonatomic) NSImage* icon;
 
 - (BOOL)showDetails;
 - (void)setShowDetails:(BOOL)value;
 @property (strong) IBOutlet NSLayoutConstraint *commentTextFieldHeightConstraint;
+@property (strong) IBOutlet NSLayoutConstraint *detailScrollViewHeightConstraint;
 
 @end
