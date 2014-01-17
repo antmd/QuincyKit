@@ -29,39 +29,11 @@
 
 #import "BWQuincyManager.h"
 #import "BWQuincyUI.h"
+#import "BWDelegatedLoggingMacros.h"
 #import <sys/sysctl.h>
 
 #define SDK_NAME @"Quincy"
 #define SDK_VERSION @"2.1.6"
-
-#undef LOG_DEBUG
-#undef LOG_INFO
-#undef LOG_WARN
-#undef LOG_ERROR
-#define _STRINGIFY(VALUE) #VALUE
-#define STRINGIFY(VALUE) _STRINGIFY(VALUE)
-
-#define LIBRARY_NAME QuincyKit
-#ifdef DEBUG
-#define LOG_DEBUG(_format, ...)                                                                    \
-    [self _logAtLevel:BW_LOG_LEVEL_DEBUG                                                           \
-                message:[NSString stringWithFormat:@"%s %s: %@", STRINGIFY(LIBRARY_NAME),          \
-                                                   __PRETTY_FUNCTION__,                            \
-                                                   [NSString stringWithFormat:_format,             \
-                                                                              ##__VA_ARGS__]]]
-#else
-#define LOG_DEBUG
-#endif
-#define _LOG(_level, _prefix, _format, ...)                                                        \
-    [self _logAtLevel:_level                                                                       \
-                message:[@_prefix stringByAppendingString:                                         \
-                                          [NSString stringWithFormat:_format, ##__VA_ARGS__]]]
-#define LOG_INFO(format, ...)                                                                      \
-    _LOG(BW_LOG_LEVEL_INFO, STRINGIFY(LIBRARY_NAME) ": ", format, ##__VA_ARGS__)
-#define LOG_WARN(format, ...)                                                                      \
-    _LOG(BW_LOG_LEVEL_WARN, STRINGIFY(LIBRARY_NAME) ": ", format, ##__VA_ARGS__)
-#define LOG_ERROR(format, ...)                                                                     \
-    _LOG(BW_LOG_LEVEL_ERROR, STRINGIFY(LIBRARY_NAME) ": ", format, ##__VA_ARGS__)
 
 
 @interface BWQuincyManager (private)
@@ -75,12 +47,12 @@
 
 
 @implementation BWQuincyManager {
-  CrashReportStatus _serverResult;
-  NSInteger         _statusCode;
-  NSMutableString   *_contentOfProperty;
-  NSString   *_crashFile;
-  BWQuincyUI *_quincyUI;
-  NSMutableData  *_receivedData;
+    CrashReportStatus _serverResult;
+    NSInteger _statusCode;
+    NSMutableString *_contentOfProperty;
+    NSString *_crashFile;
+    BWQuincyUI *_quincyUI;
+    NSMutableData *_receivedData;
     NSURLConnection *_urlConnection;
 }
 
@@ -91,7 +63,9 @@
 @synthesize autoSubmitCrashReport = _autoSubmitCrashReport;
 
 
-- (id)initWithDelegate:(id<BWQuincyManagerDelegate>)delegate applicationBundle:(NSBundle *)bundle reportBundle:(NSBundle *)pluginBundle
+- (id)initWithDelegate:(id<BWQuincyManagerDelegate>)delegate
+        applicationBundle:(NSBundle *)bundle
+             reportBundle:(NSBundle *)pluginBundle
 {
     if ((self = [super init])) {
         self.delegate = delegate;
@@ -112,9 +86,7 @@
 }
 
 - (id)initWithDelegate:(id<BWQuincyManagerDelegate>)delegate applicationBundle:(NSBundle *)bundle
-{
-    return [self initWithDelegate:nil applicationBundle:bundle reportBundle:bundle ];
-}
+{ return [self initWithDelegate:nil applicationBundle:bundle reportBundle:bundle]; }
 - (id)init { return [self initWithDelegate:nil applicationBundle:NSBundle.mainBundle]; }
 
 
@@ -138,8 +110,8 @@
                                                                      @"modDate", nil]];
     }
 
-    NSSortDescriptor *dateSortDescriptor =
-            [[NSSortDescriptor alloc] initWithKey:@"modDate" ascending:YES];
+    NSSortDescriptor *dateSortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"modDate"
+                                                                       ascending:YES];
     NSArray *sortedFiles = [filesWithModificationDate
             sortedArrayUsingDescriptors:[NSArray arrayWithObject:dateSortDescriptor]];
 
@@ -273,16 +245,19 @@
 
 - (void)startManager
 {
-    LOG_DEBUG(@"Starting:\n\tApplication { name = %@, version = %@, identifier = %@ },\n\tReport Bundle { name = %@, version = %@, identifier = %@ }",self.applicationName,self.applicationVersion,self.applicationIdentifier,self.reportBundleName,self.reportBundleVersion,self.reportBundleIdentifier);
-    
+    LOG_DEBUG(@"Starting:\n\tApplication { name = %@, version = %@, identifier = %@ },\n\tReport "
+               "Bundle { name = %@, version = %@, identifier = %@ }",
+              self.applicationName, self.applicationVersion, self.applicationIdentifier,
+              self.reportBundleName, self.reportBundleVersion, self.reportBundleIdentifier);
+
     BOOL hasValidPendingCrashReport = [self hasPendingCrashReport];
     if (hasValidPendingCrashReport) {
         if ([self.delegate respondsToSelector:@selector(diagnosticReportFileIsValid:)]) {
             hasValidPendingCrashReport = [self.delegate diagnosticReportFileIsValid:_crashFile];
         }
     }
-    
-    
+
+
     if (hasValidPendingCrashReport) {
         if (!self.autoSubmitCrashReport) {
             // Present 'Send Crash Report' query window
@@ -343,10 +318,11 @@
 
 
 
-- (void)cancelReport {
+- (void)cancelReport
+{
     LOG_INFO(@"User cancelled crash report.");
     [self returnToMainApplication];
-    [ self _cleanupConnectionAndNotifyDelegate];
+    [self _cleanupConnectionAndNotifyDelegate];
 }
 
 
@@ -365,7 +341,7 @@
     if (Gestalt(gestaltSystemVersionBugFix, &versionBugFix) != noErr)
         versionBugFix = 0;
 #pragma clang diagnostic pop
-    
+
     NSString *xml = [NSString
             stringWithFormat:@"<crash><applicationname>%s</applicationname><bundleidentifier>%s</"
                               "bundleidentifier><systemversion>%@</"
@@ -381,7 +357,7 @@
                              userid, contact, notes, crashContent];
 
 
-    LOG_DEBUG(@"Sending Crash Report: %@",xml);
+    LOG_DEBUG(@"Sending Crash Report: %@", xml);
     [self returnToMainApplication];
 
     [self _postXML:[NSString stringWithFormat:@"<crashes>%@</crashes>", xml]
@@ -443,8 +419,7 @@
     _statusCode = 200;
 
     _receivedData = [NSMutableData new];
-    _urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self ];
-                    
+    _urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self];
 }
 
 /*
@@ -456,59 +431,53 @@
  */
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)urlResponse
 {
-    // This method is called when the server has determined that it
-    // has enough information to create the NSURLResponse object.
-    
-    // It can be called multiple times, for example in the case of a
-    // redirect, so each time we reset the data.
-    
-    // receivedData is an instance variable declared elsewhere.
-    NSHTTPURLResponse* response = (NSHTTPURLResponse*)urlResponse;
+    NSHTTPURLResponse *response = (NSHTTPURLResponse *)urlResponse;
     _statusCode = [response statusCode];
-    LOG_INFO(@"Received status code %lu from server.", _statusCode);
-    
+    LOG_DEBUG(@"Received status code %lu from server.", _statusCode);
+
     [_receivedData setLength:0];
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
-    // Append the new data to receivedData.
-    // receivedData is an instance variable declared elsewhere.
     [_receivedData appendData:data];
-    LOG_DEBUG(@"Received %lu bytes.",data.length);
+    LOG_DEBUG(@"Received %lu bytes.", data.length);
 }
 
-- (void)connection:(NSURLConnection *)connection
-  didFailWithError:(NSError *)error
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
-    
-    LOG_ERROR(@"Connection failed! Error - %@ %@",
-          [error localizedDescription],
-          [[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey]);
+    LOG_ERROR(@"Connection failed! Error - %@ %@", [error localizedDescription],
+              [[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey]);
     [self _cleanupConnectionAndNotifyDelegate];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection
 {
-    LOG_INFO(@"Succeeded! Received %lu bytes of data",[_receivedData length]);
+    LOG_DEBUG(@"Succeeded! Received %lu bytes of data", [_receivedData length]);
     if (_receivedData != nil && _receivedData.length > 0) {
-            NSXMLParser *parser = [[NSXMLParser alloc] initWithData:_receivedData];
-            // Set self as the delegate of the parser so that it will receive the parser delegate
-            // methods callbacks.
-            [parser setDelegate:self];
-            // Depending on the XML document you're parsing, you may want to enable these features
-            // of NSXMLParser.
-            [parser setShouldProcessNamespaces:NO];
-            [parser setShouldReportNamespacePrefixes:NO];
-            [parser setShouldResolveExternalEntities:NO];
-            
-            [parser parse];
-        LOG_INFO(@"Server result = %d",_serverResult);
+        NSXMLParser *parser = [[NSXMLParser alloc] initWithData:_receivedData];
+        // Set self as the delegate of the parser so that it will receive the parser delegate
+        // methods callbacks.
+        [parser setDelegate:self];
+        // Depending on the XML document you're parsing, you may want to enable these features
+        // of NSXMLParser.
+        [parser setShouldProcessNamespaces:NO];
+        [parser setShouldReportNamespacePrefixes:NO];
+        [parser setShouldResolveExternalEntities:NO];
+
+        [parser parse];
+        LOG_DEBUG(@"Server result = %d", _serverResult);
+        if (_serverResult == 0) {
+            LOG_INFO(@"Crash report was submitted successfully.");
+        }
+        else {
+            LOG_ERROR(@"Crash reporting failed with result %d", _serverResult);
+        }
     }
     [self _cleanupConnectionAndNotifyDelegate];
 }
 
--(void)_cleanupConnectionAndNotifyDelegate
+- (void)_cleanupConnectionAndNotifyDelegate
 {
     _urlConnection = nil;
     _receivedData = nil;
@@ -602,22 +571,13 @@
 - (NSString *)reportBundleIdentifier
 { return [self _infoPlistValueForBundle:_reportBundle withKey:@"CFBundleIdentifier"]; }
 
-- (NSImage*)reportBundleIcon
+- (NSImage *)reportBundleIcon
 {
-    if (self.icon) {
-        return self.icon;
-    }
-    NSString* iconName = _reportBundle.infoDictionary[@"CFBundleIconFile"];
-    NSString* iconPath = [ _reportBundle pathForImageResource:iconName ];
-    return [[ NSImage alloc] initByReferencingFile:iconPath ];
+    NSString *iconName = _reportBundle.infoDictionary[@"CFBundleIconFile"];
+    NSString *iconPath = [_reportBundle pathForImageResource:iconName];
+    return [[NSImage alloc] initByReferencingFile:iconPath];
 }
 
-- (void)_logAtLevel:(BWLogLevel)level message:(NSString *)message
-{
-    if ([self.delegate respondsToSelector:@selector(logAtLevel:message:)]) {
-        [self.delegate logAtLevel:level message:message];
-    }
-}
 
 /*
  *

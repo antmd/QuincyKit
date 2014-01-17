@@ -68,6 +68,7 @@
 
 @property (nonatomic) BOOL showComments;
 @property (nonatomic) BOOL showDetails;
+@property (nonatomic) BOOL sendConsoleLog;
 @property (strong) IBOutlet NSScrollView *detailsScrollView;
 @property (copy,nonatomic) NSImage* icon;
 

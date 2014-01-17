@@ -28,14 +28,8 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "BWDelegateLogger-Protocol.h"
 
-typedef NS_ENUM(NSUInteger, BWLogLevel) {
-    BW_LOG_LEVEL_DEBUG
-    , BW_LOG_LEVEL_INFO
-    , BW_LOG_LEVEL_WARN
-    , BW_LOG_LEVEL_ERROR
-    
-};
 
 typedef enum CrashAlertType {
   CrashAlertTypeSend = 0,
@@ -108,7 +102,7 @@ typedef enum CrashReportStatus {
 
 @class BWQuincyUI;
 
-@protocol BWQuincyManagerDelegate <NSObject>
+@protocol BWQuincyManagerDelegate <BWDelegateLogger>
 
 @required
 
@@ -128,9 +122,6 @@ typedef enum CrashReportStatus {
 
 // Filtering of crash reports
 -(BOOL) diagnosticReportFileIsValid:(NSString*)diagnosticReportFile;
-
-// Logging
--(void)logAtLevel:(BWLogLevel)level message:(NSString*)message;
 
 // Notify delegate that UI will show (e.g. to unhide this app)
 -(void)uiWillBeShown;
@@ -163,9 +154,6 @@ typedef enum CrashReportStatus {
 
 // defines the company name to be shown in the crash reporting dialog
 @property (nonatomic, copy) NSString *companyName;
-
-// The icon to be displayed in the UI. Should by 64x64
-@property (nonatomic, copy) NSImage* icon;
 
 // delegate is required
 @property (nonatomic, weak) id <BWQuincyManagerDelegate> delegate;

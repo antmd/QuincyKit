@@ -53,9 +53,8 @@ const CGFloat kDetailsHeight = 285;
         _companyName = companyName;
         _applicationName = applicationName;
         self.icon = quincyManager.reportBundleIcon;
-        [self setShowComments:YES];
-        [self setShowDetails:YES];
-
+        self.showComments = YES;
+        self.showDetails = YES;
     }
     return self;
 }
@@ -66,25 +65,24 @@ const CGFloat kDetailsHeight = 285;
     crashLogTextView.editable = NO;
     crashLogTextView.selectable = NO;
     crashLogTextView.automaticSpellingCorrectionEnabled = NO;
-    crashLogTextView.typingAttributes = @{NSFontAttributeName:[NSFont userFixedPitchFontOfSize:11.0]};
+    crashLogTextView.typingAttributes =
+            @{NSFontAttributeName : [NSFont userFixedPitchFontOfSize:11.0]};
 }
 
 
-- (void)endCrashReporter {
-    [self close];
-}
+- (void)endCrashReporter { [self close]; }
 
 
 - (IBAction)showComments:(id)sender
 {
 
     if ([sender intValue]) {
-        self.showComments=NO;
+        self.showComments = NO;
         self.commentTextFieldHeightConstraint.animator.constant = kCommentsHeight;
-        self.showComments=YES;
+        self.showComments = YES;
     }
     else {
-        self.showComments=NO;
+        self.showComments = NO;
         self.commentTextFieldHeightConstraint.animator.constant = 0;
     }
 }
@@ -95,26 +93,23 @@ const CGFloat kDetailsHeight = 285;
     if ([sender intValue]) {
         self.showDetails = NO;
         self.detailsScrollView.hidden = NO;
-        [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
-            self.detailScrollViewHeightConstraint.animator.constant = kDetailsHeight;
-        } completionHandler:nil ];
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context)
+        { self.detailScrollViewHeightConstraint.animator.constant = kDetailsHeight; }
+    completionHandler:nil ];
         self.showDetails = YES;
     }
     else {
         self.showDetails = NO;
-        [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
-            self.detailScrollViewHeightConstraint.animator.constant = 0;
-        } completionHandler:^{
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context)
+        { self.detailScrollViewHeightConstraint.animator.constant = 2; }
+    completionHandler:^{
             self.detailsScrollView.hidden = YES;
         } ];
     }
 }
 
 
-- (IBAction)hideDetails:(id)sender
-{
-    [self setShowDetails:NO];
-}
+- (IBAction)hideDetails:(id)sender { [self setShowDetails:NO]; }
 
 
 - (IBAction)cancelReport:(id)sender
@@ -127,9 +122,12 @@ const CGFloat kDetailsHeight = 285;
 
 - (void)_sendReportAfterDelay
 {
-    NSString *notes = [NSString stringWithFormat:@"Comments:\n%@\n\nConsole:\n%@",
-                                                 [descriptionTextField stringValue],
-                                                 _consoleContent];
+    NSMutableString *notes = [NSMutableString
+            stringWithFormat:@"Comments:\n%@\n", descriptionTextField.stringValue];
+    if (self.sendConsoleLog && _consoleContent.length > 0) {
+        [notes appendString:@"\nConsole:\n"];
+        [notes appendString:_consoleContent];
+    }
 
     [_quincyManager sendReportCrash:_crashLogContent description:notes];
     _crashLogContent = nil;
@@ -162,41 +160,43 @@ const CGFloat kDetailsHeight = 285;
                                                        error:&error];
     NSString *lastCrash = [[crashLogs componentsSeparatedByString:@"**********\n\n"] lastObject];
 
-    _crashLogContent = lastCrash ;
+    _crashLogContent = lastCrash;
 
-    // get the console log
-    NSEnumerator *theEnum = [[[NSString stringWithContentsOfFile:@"/private/var/log/system.log"
-                                                        encoding:NSUTF8StringEncoding
-                                                           error:&error]
-                                     componentsSeparatedByString:@"\n"] objectEnumerator];
-    NSString *currentObject;
-    NSMutableArray *applicationStrings = [NSMutableArray array];
+    if (self.sendConsoleLog) {
+        // get the console log
+        NSEnumerator *theEnum = [[[NSString stringWithContentsOfFile:@"/private/var/log/system.log"
+                                                            encoding:NSUTF8StringEncoding
+                                                               error:&error]
+                                         componentsSeparatedByString:@"\n"] objectEnumerator];
+        NSString *currentObject;
+        NSMutableArray *applicationStrings = [NSMutableArray array];
 
-    NSString *searchString = [_applicationName stringByAppendingString:@"["];
-    while ((currentObject = [theEnum nextObject])) {
-        if ([currentObject rangeOfString:searchString].location != NSNotFound)
-            [applicationStrings addObject:currentObject];
+        NSString *searchString = [_applicationName stringByAppendingString:@"["];
+        while ((currentObject = [theEnum nextObject])) {
+            if ([currentObject rangeOfString:searchString].location != NSNotFound)
+                [applicationStrings addObject:currentObject];
+        }
+
+        _consoleContent = [[NSMutableString alloc] initWithString:@""];
+
+        NSInteger i;
+        for (i = ((NSInteger)[applicationStrings count]) - 1;
+             (i >= 0 && i > ((NSInteger)[applicationStrings count]) - 100); i--) {
+            [_consoleContent appendString:[applicationStrings objectAtIndex:i]];
+            [_consoleContent appendString:@"\n"];
+        }
+
+        // Now limit the content to CRASHREPORTSENDER_MAX_CONSOLE_SIZE (default: 50kByte)
+        if ([_consoleContent length] > CRASHREPORTSENDER_MAX_CONSOLE_SIZE) {
+            _consoleContent = (NSMutableString *)[_consoleContent
+                    substringWithRange:NSMakeRange([_consoleContent length] -
+                                                           CRASHREPORTSENDER_MAX_CONSOLE_SIZE - 1,
+                                                   CRASHREPORTSENDER_MAX_CONSOLE_SIZE)];
+        }
     }
 
-    _consoleContent = [[NSMutableString alloc] initWithString:@""];
-
-    NSInteger i;
-    for (i = ((NSInteger)[applicationStrings count]) - 1;
-         (i >= 0 && i > ((NSInteger)[applicationStrings count]) - 100); i--) {
-        [_consoleContent appendString:[applicationStrings objectAtIndex:i]];
-        [_consoleContent appendString:@"\n"];
-    }
-
-    // Now limit the content to CRASHREPORTSENDER_MAX_CONSOLE_SIZE (default: 50kByte)
-    if ([_consoleContent length] > CRASHREPORTSENDER_MAX_CONSOLE_SIZE) {
-        _consoleContent = (NSMutableString *)[_consoleContent
-                substringWithRange:NSMakeRange([_consoleContent length] -
-                                                       CRASHREPORTSENDER_MAX_CONSOLE_SIZE - 1,
-                                               CRASHREPORTSENDER_MAX_CONSOLE_SIZE)];
-    }
-
-    [crashLogTextView
-            setString:[NSString stringWithFormat:@"%@\n\n%@", _crashLogContent, _consoleContent]];
+    [crashLogTextView setString:[NSString stringWithFormat:@"%@\n\n%@", _crashLogContent,
+                                                           _consoleContent ?: @""]];
 
 
     NSBeep();
@@ -211,7 +211,7 @@ const CGFloat kDetailsHeight = 285;
 #pragma mark - NSWindow Delegate
 /*==================================================================================================
  */
--(BOOL)windowShouldClose:(id)sender
+- (BOOL)windowShouldClose:(id)sender
 {
     [NSApp stopModal];
     [_quincyManager cancelReport];
