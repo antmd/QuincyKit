@@ -72,5 +72,6 @@
 
 - (BOOL)showDetails;
 - (void)setShowDetails:(BOOL)value;
+@property (strong) IBOutlet NSLayoutConstraint *commentTextFieldHeightConstraint;
 
 @end

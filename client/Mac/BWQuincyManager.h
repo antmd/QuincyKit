@@ -29,6 +29,14 @@
 
 #import <Cocoa/Cocoa.h>
 
+typedef NS_ENUM(NSUInteger, BWLogLevel) {
+    BW_LOG_LEVEL_DEBUG
+    , BW_LOG_LEVEL_INFO
+    , BW_LOG_LEVEL_WARN
+    , BW_LOG_LEVEL_ERROR
+    
+};
+
 typedef enum CrashAlertType {
   CrashAlertTypeSend = 0,
   CrashAlertTypeFeedback = 1,
@@ -89,6 +97,14 @@ typedef enum CrashReportStatus {
   CrashReportStatusAvailable = 3,
 } CrashReportStatus;
 
+/*
+ *
+ *
+ *================================================================================================*/
+#pragma mark - BWQuincyManagerDelegate Protocol
+/*==================================================================================================
+ */
+
 
 @class BWQuincyUI;
 
@@ -109,61 +125,77 @@ typedef enum CrashReportStatus {
 
 // Return the contact value (e.g. email) the crashreport should contain, empty by default
 -(NSString *) crashReportContact;
+
+// Filtering of crash reports
+-(BOOL) diagnosticReportFileIsValid:(NSString*)diagnosticReportFile;
+
+// Logging
+-(void)logAtLevel:(BWLogLevel)level message:(NSString*)message;
+
+// Notify delegate that UI will show (e.g. to unhide this app)
+-(void)uiWillBeShown;
 @end
 
 
-@interface BWQuincyManager : NSObject 
-#if defined(MAC_OS_X_VERSION_10_6) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6) 
- <NSXMLParserDelegate> 
-#endif
-{
-  CrashReportStatus _serverResult;
-  NSInteger         _statusCode;
-    
-  NSMutableString   *_contentOfProperty;
+/*
+ *
+ *
+ *================================================================================================*/
+#pragma mark - BWQuincyManager
+/*==================================================================================================
+ */
 
-  id<BWQuincyManagerDelegate> _delegate;
-
-  NSString   *_submissionURL;
-  NSString   *_companyName;
-  NSString   *_appIdentifier;
-  BOOL       _autoSubmitCrashReport;
-
-  NSString   *_crashFile;
-  
-  BWQuincyUI *_quincyUI;
-}
+@interface BWQuincyManager : NSObject <NSXMLParserDelegate>
 
 - (NSString*) modelVersion;
 
-+ (BWQuincyManager *)sharedQuincyManager;
+/// The bundle of the application or plugin to be reported on
+/*! In the case of a plugin, this will be the bundle of the plugin, not the main app
+ */
+@property (nonatomic, strong) NSBundle* applicationBundle;
+@property (nonatomic, strong) NSBundle* reportBundle;
 
 // submission URL defines where to send the crash reports to (required)
-@property (nonatomic, retain) NSString *submissionURL;
+@property (nonatomic, copy) NSString *submissionURL;
 
 // defines the company name to be shown in the crash reporting dialog
-@property (nonatomic, retain) NSString *companyName;
+@property (nonatomic, copy) NSString *companyName;
 
 // delegate is required
-@property (nonatomic, assign) id <BWQuincyManagerDelegate> delegate;
+@property (nonatomic, weak) id <BWQuincyManagerDelegate> delegate;
 
 // if YES, the crash report will be submitted without asking the user
 // if NO, the user will be asked if the crash report can be submitted (default)
-@property (nonatomic, assign, getter=isAutoSubmitCrashReport) BOOL autoSubmitCrashReport;
+@property (nonatomic, getter=isAutoSubmitCrashReport) BOOL autoSubmitCrashReport;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // settings
 
 // If you want to use HockeyApp instead of your own server, this is required
-@property (nonatomic, retain) NSString *appIdentifier;
+@property (nonatomic, copy) NSString *appIdentifier;
 
 
+- (id) initWithDelegate:(id<BWQuincyManagerDelegate>)delegate applicationBundle:(NSBundle*)bundle reportBundle:(NSBundle*)pluginBundle;
+- (id) initWithDelegate:(id<BWQuincyManagerDelegate>)delegate applicationBundle:(NSBundle*)bundle;
+- (void) startManager;
 - (void) cancelReport;
 - (void) sendReportCrash:(NSString*)crashContent
              description:(NSString*)description;
 
-- (NSString *) applicationName;
-- (NSString *) applicationVersionString;
-- (NSString *) applicationVersion;
+/// Readonly properties extracted from Info.plist of 'bundle'
+@property (nonatomic,readonly) NSString *applicationName;
+@property (nonatomic,readonly) NSString *applicationVersionString;
+@property (nonatomic,readonly) NSString *applicationVersion;
+@property (nonatomic,readonly) NSString *applicationIdentifier;
 
+/// Readonly properties extracted from Info.plist of the application/bundle to be reported
+/*! The 'reportBundle' is the same as the 'application' by default, but if 'reportBundle'
+ *  is set, then the reportBundle information is used to obtain the details for crash reports.
+ *  This allows us to look for crash reports from a main application, but report on a plugin
+ *  integrated into the application
+ */
+@property (nonatomic,readonly) NSString *reportBundleName;
+@property (nonatomic,readonly) NSString *reportBundleVersionString;
+@property (nonatomic,readonly) NSString *reportBundleVersion;
+@property (nonatomic,readonly) NSString *reportBundleIdentifier;
 @end
