@@ -54,7 +54,7 @@ const CGFloat kDetailsHeight = 285;
         _applicationName = applicationName;
         self.icon = quincyManager.reportBundleIcon;
         self.showComments = YES;
-        self.showDetails = YES;
+        self.showDetails = NO;
     }
     return self;
 }
@@ -67,6 +67,13 @@ const CGFloat kDetailsHeight = 285;
     crashLogTextView.automaticSpellingCorrectionEnabled = NO;
     crashLogTextView.typingAttributes =
             @{NSFontAttributeName : [NSFont userFixedPitchFontOfSize:11.0]};
+    if (!self.showComments) {
+        self.commentTextFieldHeightConstraint.constant = 0.0;
+    }
+    if (!self.showDetails) {
+        self.detailScrollViewHeightConstraint.constant = 2.0;
+        self.detailsScrollView.hidden = YES;
+    }
 }
 
 
@@ -83,7 +90,7 @@ const CGFloat kDetailsHeight = 285;
     }
     else {
         self.showComments = NO;
-        self.commentTextFieldHeightConstraint.animator.constant = 0;
+        self.commentTextFieldHeightConstraint.animator.constant = 0.0;
     }
 }
 
@@ -101,7 +108,7 @@ const CGFloat kDetailsHeight = 285;
     else {
         self.showDetails = NO;
         [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context)
-        { self.detailScrollViewHeightConstraint.animator.constant = 2; }
+        { self.detailScrollViewHeightConstraint.animator.constant = 2.0; }
     completionHandler:^{
             self.detailsScrollView.hidden = YES;
         } ];
