@@ -162,6 +162,9 @@ typedef enum CrashReportStatus {
 // if NO, the user will be asked if the crash report can be submitted (default)
 @property (nonatomic, getter=isAutoSubmitCrashReport) BOOL autoSubmitCrashReport;
 
+// Delay in seconds before showing any pending crash report dialog
+@property (nonatomic) NSTimeInterval delaySecsBeforeShowingCrashReportDialog;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // settings
 

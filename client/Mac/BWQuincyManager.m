@@ -265,10 +265,10 @@
                                                   crashFile:_crashFile
                                                 companyName:_companyName
                                             applicationName:self.reportBundleName];
-            if ([self.delegate respondsToSelector:@selector(uiWillBeShown)]) {
-                [self.delegate uiWillBeShown];
-            }
-            [_quincyUI askCrashReportDetails];
+            
+            [ self performSelector:@selector(_showCrashReportDialog)
+                        withObject:nil
+                        afterDelay:self.delaySecsBeforeShowingCrashReportDialog ];
             return; // QuincyUI will call 'returnToMainApplication'
         }
         else {
@@ -293,6 +293,7 @@
         }
     }
     [self returnToMainApplication];
+    [self _cleanupConnectionAndNotifyDelegate];
 }
 
 - (NSString *)modelVersion
@@ -362,6 +363,14 @@
 
     [self _postXML:[NSString stringWithFormat:@"<crashes>%@</crashes>", xml]
                toURL:[NSURL URLWithString:self.submissionURL]];
+}
+
+-(void)_showCrashReportDialog
+{
+    if ([self.delegate respondsToSelector:@selector(uiWillBeShown)]) {
+        [self.delegate uiWillBeShown];
+    }
+    [_quincyUI askCrashReportDetails];
 }
 
 - (void)_postXML:(NSString *)xml toURL:(NSURL *)url

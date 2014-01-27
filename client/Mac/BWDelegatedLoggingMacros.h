@@ -35,7 +35,7 @@ static inline void _logAtLevel(id obj, BWLogLevel level, NSString *message)
             [NSString stringWithFormat:@"%s %s: %@", STRINGIFY(LIBRARY_NAME), __PRETTY_FUNCTION__, \
                                        [NSString stringWithFormat:_format, ##__VA_ARGS__]])
 #else
-#define LOG_DEBUG
+#define LOG_DEBUG(_format, ...)
 #endif
 #define _LOG(_level, _prefix, _format, ...)                                                        \
     _logAtLevel(                                                                                   \

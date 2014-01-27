@@ -62,6 +62,7 @@ const CGFloat kDetailsHeight = 285;
 
 - (void)awakeFromNib
 {
+    self.window.canHide = NO;
     crashLogTextView.editable = NO;
     crashLogTextView.selectable = NO;
     crashLogTextView.automaticSpellingCorrectionEnabled = NO;
