@@ -91,6 +91,8 @@ typedef enum CrashReportStatus {
   CrashReportStatusAvailable = 3,
 } CrashReportStatus;
 
+// A separator used in composite crash logs to separate individual crash logs
+extern NSString* BWCrashLogSeparator ;
 /*
  *
  *
@@ -146,8 +148,8 @@ typedef enum CrashReportStatus {
 /// The bundle of the application or plugin to be reported on
 /*! In the case of a plugin, this will be the bundle of the plugin, not the main app
  */
-@property (nonatomic, strong) NSBundle* applicationBundle;
-@property (nonatomic, strong) NSBundle* reportBundle;
+@property (nonatomic, strong, readonly) NSBundle* applicationBundle;
+@property (nonatomic, strong, readonly) NSBundle* reportBundle;
 
 // submission URL defines where to send the crash reports to (required)
 @property (nonatomic, copy) NSString *submissionURL;
@@ -178,6 +180,7 @@ typedef enum CrashReportStatus {
 - (void) cancelReport;
 - (void) sendReportCrash:(NSString*)crashContent
              description:(NSString*)description;
++(NSString*)makeReportFromCrashFile:(NSString*)crashFile;
 
 /// Readonly properties extracted from Info.plist of 'bundle'
 @property (nonatomic,readonly) NSString *applicationName;
@@ -191,9 +194,9 @@ typedef enum CrashReportStatus {
  *  This allows us to look for crash reports from a main application, but report on a plugin
  *  integrated into the application
  */
-@property (nonatomic,readonly) NSString *reportBundleName;
-@property (nonatomic,readonly) NSString *reportBundleVersionString;
-@property (nonatomic,readonly) NSString *reportBundleVersion;
-@property (nonatomic,readonly) NSString *reportBundleIdentifier;
-@property (nonatomic,readonly) NSImage  *reportBundleIcon;
+@property (nonatomic,copy,readonly) NSString *reportBundleName;
+@property (nonatomic,copy,readonly) NSString *reportBundleVersionString;
+@property (nonatomic,copy,readonly) NSString *reportBundleVersion;
+@property (nonatomic,copy,readonly) NSString *reportBundleIdentifier;
+@property (nonatomic,copy,readonly) NSImage  *reportBundleIcon;
 @end

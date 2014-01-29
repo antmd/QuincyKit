@@ -34,15 +34,17 @@
 
 #define SDK_NAME @"Quincy"
 #define SDK_VERSION @"2.1.6"
+NSString* BWCrashLogSeparator = @"**********\n\n";
 
 
-@interface BWQuincyManager (private)
-- (void)startManager;
-
-- (void)_postXML:(NSString *)xml toURL:(NSURL *)url;
-- (void)searchCrashLogFile:(NSString *)path;
-- (BOOL)hasPendingCrashReport;
-- (void)returnToMainApplication;
+@interface BWQuincyManager ()
+@property (nonatomic,copy,readwrite) NSString *reportBundleName;
+@property (nonatomic,copy,readwrite) NSString *reportBundleVersionString;
+@property (nonatomic,copy,readwrite) NSString *reportBundleVersion;
+@property (nonatomic,copy,readwrite) NSString *reportBundleIdentifier;
+@property (nonatomic,copy,readwrite) NSImage  *reportBundleIcon;
+@property (nonatomic,strong,readwrite) NSBundle* applicationBundle;
+@property (nonatomic,strong,readwrite) NSBundle* reportBundle;
 @end
 
 
@@ -63,6 +65,21 @@
 @synthesize autoSubmitCrashReport = _autoSubmitCrashReport;
 
 
++(NSString*)makeReportFromCrashFile:(NSString*)crashFile
+{
+    NSError* error;
+    NSString *crashLogs = [NSString stringWithContentsOfFile:crashFile
+                                                    encoding:NSUTF8StringEncoding
+                                                       error:&error];
+    NSString* lastCrash;
+    if (!error) {
+        lastCrash = [[crashLogs componentsSeparatedByString:BWCrashLogSeparator] lastObject];
+    }
+
+    return lastCrash;
+}
+
+
 - (id)initWithDelegate:(id<BWQuincyManagerDelegate>)delegate
         applicationBundle:(NSBundle *)bundle
              reportBundle:(NSBundle *)pluginBundle
@@ -79,6 +96,27 @@
         _crashFile = nil;
         _applicationBundle = bundle;
         _reportBundle = pluginBundle;
+        
+        if (_reportBundle == nil || [_applicationBundle.bundleURL isEqual:_reportBundle.bundleURL]) {
+            self.reportBundleName = self.applicationName;
+            self.reportBundleVersion = self.applicationVersion;
+            self.reportBundleIdentifier = self.applicationIdentifier;
+            self.reportBundleVersionString = self.applicationVersionString;
+            self.reportBundleIcon = [self _iconForBundle:_applicationBundle
+                                                   named:[ self _infoPlistValueForBundle:_applicationBundle withKey:@"CFBundleIconFile"]];
+        }
+        else {
+            NSURL* url = _reportBundle.bundleURL;
+            // Use the CoreFoundation functtion instead of the NSBundle method, as NSBundle caches, and will not pick up on
+            // changes during the same run of this program
+            NSDictionary* infoDictionary = (__bridge_transfer  NSDictionary*) CFBundleCopyInfoDictionaryForURL( (__bridge CFURLRef) url );
+            self.reportBundleName = infoDictionary[@"CFBundleExecutable"];
+            self.reportBundleVersionString = infoDictionary[@"CFBundleShortVersionString"];
+            self.reportBundleVersion = infoDictionary[@"CFBundleVersion"];
+            self.reportBundleIdentifier = infoDictionary[@"CFBundleIdentifier"];
+            self.reportBundleIcon = [self _iconForBundle:_reportBundle
+                                                   named:infoDictionary[@"CFBundleIconFile"]];
+        }
 
         self.companyName = @"";
     }
@@ -116,7 +154,7 @@
             sortedArrayUsingDescriptors:[NSArray arrayWithObject:dateSortDescriptor]];
 
     NSPredicate *filterPredicate = [NSPredicate
-            predicateWithFormat:@"name BEGINSWITH %@", [self applicationName]];
+            predicateWithFormat:@"name BEGINSWITH %@", self.applicationName];
     NSArray *filteredFiles = [sortedFiles filteredArrayUsingPredicate:filterPredicate];
 
     _crashFile = [[[filteredFiles valueForKeyPath:@"path"] lastObject] copy];
@@ -145,11 +183,13 @@
     return date ?: [NSDate distantPast];
 }
 
+
 - (void)storeAppVersion:(NSString *)version
 {
     [NSUserDefaults.standardUserDefaults setValue:version forKey:@"CrashReportSender.appVersion"];
     [NSUserDefaults.standardUserDefaults synchronize];
 }
+
 
 - (NSString *)loadAppVersion
 {
@@ -236,12 +276,14 @@
     return returnValue;
 }
 
+
 - (void)returnToMainApplication
 {
     if (self.delegate != nil && [self.delegate
                                         respondsToSelector:@selector(showMainApplicationWindow)])
         [self.delegate showMainApplicationWindow];
 }
+
 
 - (void)startManager
 {
@@ -259,27 +301,23 @@
 
 
     if (hasValidPendingCrashReport) {
-        if (!self.autoSubmitCrashReport) {
-            // Present 'Send Crash Report' query window
-            _quincyUI = [[BWQuincyUI alloc] initWithManager:self
-                                                  crashFile:_crashFile
-                                                companyName:_companyName
-                                            applicationName:self.reportBundleName];
-            
-            [ self performSelector:@selector(_showCrashReportDialog)
-                        withObject:nil
-                        afterDelay:self.delaySecsBeforeShowingCrashReportDialog ];
-            return; // QuincyUI will call 'returnToMainApplication'
-        }
-        else {
+        NSString* crashLogText = [ BWQuincyManager makeReportFromCrashFile:_crashFile ];
+        
+        if (crashLogText.length > 0) {
+            if (!self.autoSubmitCrashReport) {
+                // Present 'Send Crash Report' query window
+                _quincyUI = [[BWQuincyUI alloc] initWithManager:self
+                                                   crashLogText:crashLogText
+                                                    companyName:_companyName
+                                                applicationName:self.reportBundleName];
+                
+                [ self performSelector:@selector(_showCrashReportDialog)
+                            withObject:nil
+                            afterDelay:self.delaySecsBeforeShowingCrashReportDialog ];
+                return; // QuincyUI will call 'returnToMainApplication'
+            }
+            else {
             // Auto-submit crash report
-            NSError *error = nil;
-            NSString *crashLogs = [NSString stringWithContentsOfFile:_crashFile
-                                                            encoding:NSUTF8StringEncoding
-                                                               error:&error];
-            if (!error) {
-                NSString *
-                lastCrash = [[crashLogs componentsSeparatedByString:@"**********\n\n"] lastObject];
 
                 NSString *description = @"";
 
@@ -287,14 +325,16 @@
                     description = [_delegate crashReportDescription];
                 }
 
-                [self sendReportCrash:lastCrash description:description];
+                [self sendReportCrash:crashLogText description:description];
                 return; // sendReportCrash:description: will call 'returnToMainApplication'
             }
         }
     }
+    
     [self returnToMainApplication];
     [self _cleanupConnectionAndNotifyDelegate];
 }
+
 
 - (NSString *)modelVersion
 {
@@ -364,6 +404,7 @@
     [self _postXML:[NSString stringWithFormat:@"<crashes>%@</crashes>", xml]
                toURL:[NSURL URLWithString:self.submissionURL]];
 }
+
 
 -(void)_showCrashReportDialog
 {
@@ -568,25 +609,6 @@
 - (NSString *)applicationIdentifier
 { return [self _infoPlistValueForBundle:_applicationBundle withKey:@"CFBundleIdentifier"]; }
 
-- (NSString *)reportBundleName
-{ return [self _infoPlistValueForBundle:_reportBundle withKey:@"CFBundleExecutable"]; }
-
-- (NSString *)reportBundleVersionString
-{ return [self _infoPlistValueForBundle:_reportBundle withKey:@"CFBundleShortVersionString"]; }
-
-- (NSString *)reportBundleVersion
-{ return [self _infoPlistValueForBundle:_reportBundle withKey:@"CFBundleVersion"]; }
-
-- (NSString *)reportBundleIdentifier
-{ return [self _infoPlistValueForBundle:_reportBundle withKey:@"CFBundleIdentifier"]; }
-
-- (NSImage *)reportBundleIcon
-{
-    NSString *iconName = _reportBundle.infoDictionary[@"CFBundleIconFile"];
-    NSString *iconPath = [_reportBundle pathForImageResource:iconName];
-    return [[NSImage alloc] initByReferencingFile:iconPath];
-}
-
 
 /*
  *
@@ -596,11 +618,18 @@
 /*==================================================================================================
  */
 
+- (NSImage *)_iconForBundle:(NSBundle*)bundle named:(NSString*)iconName
+{
+    NSString *iconPath = [bundle pathForImageResource:iconName];
+    return [[NSImage alloc] initByReferencingFile:iconPath];
+}
+
 
 - (NSString *)_infoPlistValueForBundle:(NSBundle *)bundle withKey:(NSString *)infoPlistKey
 {
     NSString *infoPlistValue = [bundle.localizedInfoDictionary valueForKey:infoPlistKey];
     return infoPlistValue ?: [bundle.infoDictionary valueForKey:infoPlistKey];
 }
+
 
 @end

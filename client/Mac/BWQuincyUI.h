@@ -42,20 +42,11 @@
   IBOutlet NSButton   *cancelButton;
   IBOutlet NSButton   *submitButton;
   
-  BWQuincyManager   *_quincyManager;
-  
+  __weak BWQuincyManager   *_quincyManager;
   NSString      *_xml;
-  
-  NSString      *_crashFile;
-  NSString      *_companyName;
-  NSString      *_applicationName;
-  
-  NSMutableString   *_consoleContent;
-  NSString      *_crashLogContent;
-  
 }
 
-- (id)initWithManager:(BWQuincyManager *)quincyManager crashFile:(NSString *)crashFile companyName:(NSString *)companyName applicationName:(NSString *)applicationName;
+- (id)initWithManager:(BWQuincyManager *)quincyManager crashLogText:(NSString *)crashFile companyName:(NSString *)companyName applicationName:(NSString *)applicationName;
 
 - (void) askCrashReportDetails;
 
@@ -66,9 +57,11 @@
 - (IBAction) showComments:(id)sender;
 - (IBAction) showDetails:(id)sender;
 
+@property (copy,nonatomic) NSString* applicationName;
+@property (copy,nonatomic) NSString* companyName;
+@property (copy,nonatomic) NSString* crashLogText;
 @property (nonatomic) BOOL showComments;
 @property (nonatomic) BOOL showDetails;
-@property (nonatomic) BOOL sendConsoleLog;
 @property (strong) IBOutlet NSScrollView *detailsScrollView;
 @property (copy,nonatomic) NSImage* icon;
 

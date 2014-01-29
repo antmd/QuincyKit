@@ -31,7 +31,6 @@
 #import "BWQuincyManager.h"
 #import <sys/sysctl.h>
 
-#define CRASHREPORTSENDER_MAX_CONSOLE_SIZE 50000
 
 const CGFloat kCommentsHeight = 105;
 const CGFloat kDetailsHeight = 285;
@@ -39,7 +38,7 @@ const CGFloat kDetailsHeight = 285;
 @implementation BWQuincyUI
 
 - (id)initWithManager:(BWQuincyManager *)quincyManager
-              crashFile:(NSString *)crashFile
+          crashLogText:(NSString *)crashLogText
             companyName:(NSString *)companyName
         applicationName:(NSString *)applicationName
 {
@@ -49,9 +48,9 @@ const CGFloat kDetailsHeight = 285;
     if (self != nil) {
         _xml = nil;
         _quincyManager = quincyManager;
-        _crashFile = crashFile;
-        _companyName = companyName;
-        _applicationName = applicationName;
+        self.crashLogText = crashLogText;
+        self.companyName = companyName;
+        self.applicationName = applicationName;
         self.icon = quincyManager.reportBundleIcon;
         self.showComments = YES;
         self.showDetails = NO;
@@ -132,13 +131,7 @@ const CGFloat kDetailsHeight = 285;
 {
     NSMutableString *notes = [NSMutableString
             stringWithFormat:@"Comments:\n%@\n", descriptionTextField.stringValue];
-    if (self.sendConsoleLog && _consoleContent.length > 0) {
-        [notes appendString:@"\nConsole:\n"];
-        [notes appendString:_consoleContent];
-    }
-
-    [_quincyManager sendReportCrash:_crashLogContent description:notes];
-    _crashLogContent = nil;
+    [_quincyManager sendReportCrash:crashLogTextView.string description:notes];
 }
 
 - (IBAction)submitReport:(id)sender
@@ -156,58 +149,12 @@ const CGFloat kDetailsHeight = 285;
 
 - (void)askCrashReportDetails
 {
-    NSError *error;
-
     [[self window] setTitle:[NSString stringWithFormat:NSLocalizedString(@"Problem Report for %@",
                                                                          @"Window title"),
                                                        _applicationName]];
 
-    // get the crash log
-    NSString *crashLogs = [NSString stringWithContentsOfFile:_crashFile
-                                                    encoding:NSUTF8StringEncoding
-                                                       error:&error];
-    NSString *lastCrash = [[crashLogs componentsSeparatedByString:@"**********\n\n"] lastObject];
-
-    _crashLogContent = lastCrash;
-
-    if (self.sendConsoleLog) {
-        // get the console log
-        NSEnumerator *theEnum = [[[NSString stringWithContentsOfFile:@"/private/var/log/system.log"
-                                                            encoding:NSUTF8StringEncoding
-                                                               error:&error]
-                                         componentsSeparatedByString:@"\n"] objectEnumerator];
-        NSString *currentObject;
-        NSMutableArray *applicationStrings = [NSMutableArray array];
-
-        NSString *searchString = [_applicationName stringByAppendingString:@"["];
-        while ((currentObject = [theEnum nextObject])) {
-            if ([currentObject rangeOfString:searchString].location != NSNotFound)
-                [applicationStrings addObject:currentObject];
-        }
-
-        _consoleContent = [[NSMutableString alloc] initWithString:@""];
-
-        NSInteger i;
-        for (i = ((NSInteger)[applicationStrings count]) - 1;
-             (i >= 0 && i > ((NSInteger)[applicationStrings count]) - 100); i--) {
-            [_consoleContent appendString:[applicationStrings objectAtIndex:i]];
-            [_consoleContent appendString:@"\n"];
-        }
-
-        // Now limit the content to CRASHREPORTSENDER_MAX_CONSOLE_SIZE (default: 50kByte)
-        if ([_consoleContent length] > CRASHREPORTSENDER_MAX_CONSOLE_SIZE) {
-            _consoleContent = (NSMutableString *)[_consoleContent
-                    substringWithRange:NSMakeRange([_consoleContent length] -
-                                                           CRASHREPORTSENDER_MAX_CONSOLE_SIZE - 1,
-                                                   CRASHREPORTSENDER_MAX_CONSOLE_SIZE)];
-        }
-    }
-
-    [crashLogTextView setString:[NSString stringWithFormat:@"%@\n\n%@", _crashLogContent,
-                                                           _consoleContent ?: @""]];
-
-
-    NSBeep();
+    crashLogTextView.string = self.crashLogText ?: @"";
+    
     [NSApp runModalForWindow:self.window];
 }
 
