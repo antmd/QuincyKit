@@ -103,6 +103,7 @@ extern NSString* BWCrashLogSeparator ;
 
 
 @class BWQuincyUI;
+@class BWQuincyManager;
 
 @protocol BWQuincyManagerDelegate <BWDelegateLogger>
 
@@ -123,7 +124,7 @@ extern NSString* BWCrashLogSeparator ;
 -(NSString *) crashReportContact;
 
 // Filtering of crash reports
--(BOOL) diagnosticReportFileIsValid:(NSString*)diagnosticReportFile;
+-(BOOL) diagnosticReportFileIsValid:(NSString*)diagnosticReportFile manager:(BWQuincyManager*)manager;
 
 // Notify delegate that UI will show (e.g. to unhide this app)
 -(void)uiWillBeShown;

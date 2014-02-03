@@ -294,8 +294,8 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
 
     BOOL hasValidPendingCrashReport = [self hasPendingCrashReport];
     if (hasValidPendingCrashReport) {
-        if ([self.delegate respondsToSelector:@selector(diagnosticReportFileIsValid:)]) {
-            hasValidPendingCrashReport = [self.delegate diagnosticReportFileIsValid:_crashFile];
+        if ([self.delegate respondsToSelector:@selector(diagnosticReportFileIsValid:manager:)]) {
+            hasValidPendingCrashReport = [self.delegate diagnosticReportFileIsValid:_crashFile manager:self];
         }
     }
 
