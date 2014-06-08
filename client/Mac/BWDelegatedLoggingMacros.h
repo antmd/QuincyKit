@@ -24,7 +24,7 @@ static inline void _logAtLevel(id obj, BWLogLevel level, NSString *message)
 {
     if ([obj respondsToSelector:@selector(delegate)] &&
         [[obj delegate] respondsToSelector:@selector(logAtLevel:message:)]) {
-        [[obj delegate] logAtLevel:level message:message];
+        [(id<BWDelegateLogger>)[obj delegate] logAtLevel:level message:message];
     }
 }
 #define LIBRARY_NAME QuincyKit
