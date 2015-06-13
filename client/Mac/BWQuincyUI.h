@@ -52,7 +52,6 @@
 
 - (IBAction) cancelReport:(id)sender;
 - (IBAction) submitReport:(id)sender;
-- (IBAction) showDetails:(id)sender;
 - (IBAction) hideDetails:(id)sender;
 - (IBAction) showComments:(id)sender;
 - (IBAction) showDetails:(id)sender;
