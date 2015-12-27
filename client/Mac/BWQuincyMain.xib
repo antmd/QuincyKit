@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5037.2" systemVersion="13C39" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15A279b" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment version="1080" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5037.2"/>
+        <development version="6300" identifier="xcode"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="BWQuincyUI">
@@ -19,11 +20,11 @@
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Crash Reporter" allowsToolTipsWhenApplicationIsInactive="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="3Rg-ZQ-Ohf" userLabel="Crash UI">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" resizable="YES"/>
             <rect key="contentRect" x="602" y="592" width="571" height="587"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1418"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1440"/>
             <value key="minSize" type="size" width="213" height="107"/>
             <view key="contentView" id="5AP-rW-Nwd">
                 <rect key="frame" x="0.0" y="0.0" width="571" height="587"/>
@@ -31,14 +32,13 @@
                 <subviews>
                     <box title="Title" boxType="oldStyle" borderType="none" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="Ifs-Ee-nev">
                         <rect key="frame" x="112" y="75" width="439" height="285"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
                         <view key="contentView">
                             <rect key="frame" x="0.0" y="0.0" width="439" height="285"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LYl-nj-dXr">
+                                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" misplaced="YES" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LYl-nj-dXr">
                                     <rect key="frame" x="19" y="270" width="265" height="17"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                    <animations/>
                                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Problem details and system configuration" id="pm3-Ra-3ty">
                                         <font key="font" metaFont="system"/>
                                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -47,7 +47,6 @@
                                 </textField>
                                 <scrollView autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hYp-Zm-rAz">
                                     <rect key="frame" x="0.0" y="8" width="439" height="254"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                     <clipView key="contentView" id="uNR-xi-C32">
                                         <rect key="frame" x="1" y="1" width="437" height="252"/>
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -55,6 +54,7 @@
                                             <textView toolTip="Please describe any steps needed to trigger the problem" editable="NO" importsGraphics="NO" richText="NO" allowsUndo="YES" usesRuler="YES" usesFontPanel="YES" verticallyResizable="YES" id="tb9-gQ-VYT">
                                                 <rect key="frame" x="0.0" y="0.0" width="437" height="252"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <animations/>
                                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                 <size key="minSize" width="437" height="252"/>
                                                 <size key="maxSize" width="876" height="10000000"/>
@@ -64,23 +64,27 @@
                                                 <accessibility description="Please describe any steps needed to trigger the problem" help="Please describe any steps needed to trigger the problem"/>
                                             </textView>
                                         </subviews>
+                                        <animations/>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </clipView>
                                     <constraints>
                                         <constraint firstAttribute="height" constant="254" id="XWP-dn-oON"/>
                                     </constraints>
+                                    <animations/>
                                     <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="kTY-2m-OVB">
                                         <rect key="frame" x="-100" y="-100" width="87" height="18"/>
                                         <autoresizingMask key="autoresizingMask"/>
+                                        <animations/>
                                     </scroller>
                                     <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="Fok-Mq-rfd">
                                         <rect key="frame" x="-30" y="1" width="15" height="90"/>
                                         <autoresizingMask key="autoresizingMask"/>
+                                        <animations/>
                                     </scroller>
                                 </scrollView>
                                 <button horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zhg-e2-fr3" userLabel="Disclosure - Toggle Details">
                                     <rect key="frame" x="0.0" y="271" width="13" height="13"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <animations/>
                                     <buttonCell key="cell" type="disclosureTriangle" bezelStyle="disclosure" imagePosition="above" alignment="left" refusesFirstResponder="YES" borderStyle="border" inset="2" id="lpu-Rj-Y2P">
                                         <behavior key="behavior" pushIn="YES" changeBackground="YES" changeGray="YES" lightByContents="YES"/>
                                         <font key="font" metaFont="system"/>
@@ -94,6 +98,7 @@
                                     </connections>
                                 </button>
                             </subviews>
+                            <animations/>
                         </view>
                         <constraints>
                             <constraint firstItem="hYp-Zm-rAz" firstAttribute="leading" secondItem="Ifs-Ee-nev" secondAttribute="leading" id="2NA-o4-wVY"/>
@@ -104,16 +109,17 @@
                             <constraint firstItem="hYp-Zm-rAz" firstAttribute="top" secondItem="LYl-nj-dXr" secondAttribute="bottom" constant="8" id="nV4-q1-NCa"/>
                             <constraint firstAttribute="trailing" secondItem="hYp-Zm-rAz" secondAttribute="trailing" id="uUd-c9-ZKo"/>
                         </constraints>
+                        <animations/>
                         <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                         <font key="titleFont" size="11" name="LucidaGrande"/>
                     </box>
                     <textField horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="eal-98-Nqy">
                         <rect key="frame" x="112" y="368" width="439" height="105"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="105" id="QkQ-o7-wxG"/>
                         </constraints>
+                        <animations/>
                         <textFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Please describe any steps needed to cause the problem" drawsBackground="YES" id="vjV-Sc-4Xy">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -125,10 +131,10 @@
                     </textField>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qur-kn-jtc">
                         <rect key="frame" x="109" y="508" width="445" height="54"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="54" id="O3m-wA-DYd"/>
                         </constraints>
+                        <animations/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="%@ unexpectedly quit the last time it was run. Would you like to send a crash report to %@?" id="9Np-V1-8yZ">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -149,7 +155,7 @@
                     </textField>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lpH-ce-TTk">
                         <rect key="frame" x="393" y="35" width="82" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <animations/>
                         <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="Au7-I2-QtO">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -163,7 +169,7 @@ Gw
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fNJ-zz-pCi">
                         <rect key="frame" x="475" y="35" width="82" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <animations/>
                         <buttonCell key="cell" type="push" title="Send" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="yHR-de-KBn">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -177,7 +183,7 @@ DQ
                     </button>
                     <button horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="V0t-lM-vdq">
                         <rect key="frame" x="112" y="481" width="13" height="13"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <animations/>
                         <buttonCell key="cell" type="disclosureTriangle" bezelStyle="disclosure" imagePosition="above" alignment="left" refusesFirstResponder="YES" borderStyle="border" inset="2" id="jjA-ab-mgh">
                             <behavior key="behavior" pushIn="YES" changeBackground="YES" changeGray="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
@@ -190,9 +196,9 @@ DQ
                             <binding destination="-2" name="value" keyPath="showComments" id="nvS-sS-6wL"/>
                         </connections>
                     </button>
-                    <textField verticalHuggingPriority="249" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="quc-vd-mZ7">
+                    <textField verticalHuggingPriority="249" horizontalCompressionResistancePriority="250" misplaced="YES" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="quc-vd-mZ7">
                         <rect key="frame" x="130" y="479" width="138" height="18"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <animations/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Comments (Optional)" id="SsY-UY-pjz">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -201,11 +207,11 @@ DQ
                     </textField>
                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="UaZ-yn-gHu">
                         <rect key="frame" x="20" y="503" width="64" height="64"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="64" id="gWs-I5-w02"/>
                             <constraint firstAttribute="height" constant="64" id="zBQ-N6-Teh"/>
                         </constraints>
+                        <animations/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSApplicationIcon" id="sd2-JJ-RBH"/>
                         <connections>
                             <binding destination="-2" name="value" keyPath="icon" id="lAj-EY-DCC"/>
@@ -213,7 +219,7 @@ DQ
                     </imageView>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8Ub-X3-r8F">
                         <rect key="frame" x="109" y="20" width="445" height="11"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                        <animations/>
                         <textFieldCell key="cell" selectable="YES" enabled="NO" sendsActionOnEndEditing="YES" state="on" alignment="right" title="No personal information will be sent with this report." placeholderString="Note" id="7p1-1n-JKX">
                             <font key="font" metaFont="miniSystem"/>
                             <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -251,6 +257,7 @@ DQ
                     <constraint firstItem="quc-vd-mZ7" firstAttribute="top" secondItem="qur-kn-jtc" secondAttribute="bottom" constant="11" id="nr0-JA-G85"/>
                     <constraint firstItem="V0t-lM-vdq" firstAttribute="top" secondItem="qur-kn-jtc" secondAttribute="bottom" constant="14" id="qjA-k2-i25"/>
                 </constraints>
+                <animations/>
             </view>
             <connections>
                 <outlet property="delegate" destination="-2" id="4cs-S5-Nbg"/>

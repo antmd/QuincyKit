@@ -240,7 +240,7 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
         }
         // Search machine diagnostic reports directory
         if (_crashFile == nil) {
-            NSArray *libraryDirectories = NSSearchPathForDirectoriesInDomains(
+            libraryDirectories = NSSearchPathForDirectoriesInDomains(
                     NSLibraryDirectory, NSLocalDomainMask, TRUE);
             [self searchCrashLogFile:
                             [[libraryDirectories lastObject]
@@ -279,14 +279,17 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
 
 - (void)returnToMainApplication
 {
-    if (self.delegate != nil && [self.delegate
-                                        respondsToSelector:@selector(showMainApplicationWindow)])
-        [self.delegate showMainApplicationWindow];
+    id <BWQuincyManagerDelegate> __strong delegate = self.delegate;
+    if ([delegate respondsToSelector:@selector(showMainApplicationWindow)]) {
+        [delegate showMainApplicationWindow];
+    }
 }
 
 
 - (void)startManager
 {
+    id <BWQuincyManagerDelegate> __strong delegate = self.delegate;
+    if (!delegate) return;
     LOG_DEBUG(@"Starting:\n\tApplication { name = %@, version = %@, identifier = %@ },\n\tReport "
                "Bundle { name = %@, version = %@, identifier = %@ }",
               self.applicationName, self.applicationVersion, self.applicationIdentifier,
@@ -294,8 +297,8 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
 
     BOOL hasValidPendingCrashReport = [self hasPendingCrashReport];
     if (hasValidPendingCrashReport) {
-        if ([self.delegate respondsToSelector:@selector(diagnosticReportFileIsValid:manager:)]) {
-            hasValidPendingCrashReport = [self.delegate diagnosticReportFileIsValid:_crashFile manager:self];
+        if ([delegate respondsToSelector:@selector(diagnosticReportFileIsValid:manager:)]) {
+            hasValidPendingCrashReport = [delegate diagnosticReportFileIsValid:_crashFile manager:self];
         }
     }
 
@@ -321,8 +324,8 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
 
                 NSString *description = @"";
 
-                if (_delegate && [_delegate respondsToSelector:@selector(crashReportDescription)]) {
-                    description = [_delegate crashReportDescription];
+                if ([delegate respondsToSelector:@selector(crashReportDescription)]) {
+                    description = [delegate crashReportDescription];
                 }
 
                 [self sendReportCrash:crashLogText description:description];
@@ -408,8 +411,9 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
 
 -(void)_showCrashReportDialog
 {
-    if ([self.delegate respondsToSelector:@selector(uiWillBeShown)]) {
-        [self.delegate uiWillBeShown];
+    id <BWQuincyManagerDelegate> __strong delegate = self.delegate;
+    if ([delegate respondsToSelector:@selector(uiWillBeShown)]) {
+        [delegate uiWillBeShown];
     }
     [_quincyUI askCrashReportDetails];
 }
@@ -529,10 +533,11 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
 
 - (void)_cleanupConnectionAndNotifyDelegate
 {
+    id <BWQuincyManagerDelegate> __strong delegate = self.delegate;
     _urlConnection = nil;
     _receivedData = nil;
-    if ([self.delegate respondsToSelector:@selector(crashReportingCompleted)]) {
-        [self.delegate crashReportingCompleted];
+    if ([delegate respondsToSelector:@selector(crashReportingCompleted)]) {
+        [delegate crashReportingCompleted];
     }
 }
 /*

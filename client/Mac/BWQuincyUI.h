@@ -55,7 +55,6 @@
 - (IBAction) showDetails:(id)sender;
 - (IBAction) hideDetails:(id)sender;
 - (IBAction) showComments:(id)sender;
-- (IBAction) showDetails:(id)sender;
 
 @property (copy,nonatomic) NSString* applicationName;
 @property (copy,nonatomic) NSString* companyName;
