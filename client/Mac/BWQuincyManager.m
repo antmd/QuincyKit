@@ -55,7 +55,7 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
     NSString *_crashFile;
     BWQuincyUI *_quincyUI;
     NSMutableData *_receivedData;
-    NSURLConnection *_urlConnection;
+    NSURLSessionTask *_urlConnection;
 }
 
 @synthesize delegate = _delegate;
@@ -422,58 +422,72 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
 {
     NSMutableURLRequest *request = nil;
     NSString *boundary = @"----FOO";
-
+    
     if (self.appIdentifier) {
-        request = [NSMutableURLRequest
-                requestWithURL:
-                        [NSURL URLWithString:
-                                        [NSString
-                                                stringWithFormat:
-                                                        @"%@api/2/apps/%@/"
-                                                         "crashes?sdk=%@&sdk_version=%@",
-                                                        self.submissionURL,
-                                                        [self.appIdentifier
-                                                                stringByAddingPercentEscapesUsingEncoding:
-                                                                        NSUTF8StringEncoding],
-                                                        SDK_NAME, SDK_VERSION]]];
+        NSString *safeAppID = [self.appIdentifier stringByAddingPercentEncodingWithAllowedCharacters:
+                               [NSCharacterSet URLQueryAllowedCharacterSet]];
+        NSString *queryString = [NSString
+                                 stringWithFormat:
+                                 @"%@api/2/apps/%@/"
+                                 "crashes?sdk=%@&sdk_version=%@"
+                                 , self.submissionURL
+                                 , safeAppID
+                                 , SDK_NAME
+                                 , SDK_VERSION];
+        request = [NSMutableURLRequest requestWithURL: [NSURL URLWithString: queryString]];
     }
     else {
         request = [NSMutableURLRequest requestWithURL:url];
     }
-
+    
     [request setValue:@"Quincy/Mac" forHTTPHeaderField:@"User-Agent"];
     [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
     [request setTimeoutInterval:15];
     [request setHTTPMethod:@"POST"];
     NSString *contentType = [NSString
-            stringWithFormat:@"multipart/form-data; boundary=%@", boundary];
+                             stringWithFormat:@"multipart/form-data; boundary=%@", boundary];
     [request setValue:contentType forHTTPHeaderField:@"Content-type"];
-
+    
     NSMutableData *postBody = [NSMutableData data];
     [postBody appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary]
-                                 dataUsingEncoding:NSUTF8StringEncoding]];
+                          dataUsingEncoding:NSUTF8StringEncoding]];
     if (self.appIdentifier) {
         [postBody
-                appendData:
-                        [@"Content-Disposition: form-data; name=\"xml\"; filename=\"crash.xml\"\r\n"
-                                dataUsingEncoding:NSUTF8StringEncoding]];
+         appendData:
+         [@"Content-Disposition: form-data; name=\"xml\"; filename=\"crash.xml\"\r\n"
+          dataUsingEncoding:NSUTF8StringEncoding]];
         [postBody appendData:[[NSString stringWithFormat:@"Content-Type: text/xml\r\n\r\n"]
-                                     dataUsingEncoding:NSUTF8StringEncoding]];
+                              dataUsingEncoding:NSUTF8StringEncoding]];
     }
     else {
         [postBody appendData:[@"Content-Disposition: form-data; name=\"xmlstring\"\r\n\r\n"
-                                     dataUsingEncoding:NSUTF8StringEncoding]];
+                              dataUsingEncoding:NSUTF8StringEncoding]];
     }
     [postBody appendData:[xml dataUsingEncoding:NSUTF8StringEncoding]];
     [postBody appendData:[[NSString stringWithFormat:@"\r\n--%@--\r\n", boundary]
-                                 dataUsingEncoding:NSUTF8StringEncoding]];
+                          dataUsingEncoding:NSUTF8StringEncoding]];
     [request setHTTPBody:postBody];
-
+    
     _serverResult = CrashReportStatusUnknown;
     _statusCode = 200;
-
+    
     _receivedData = [NSMutableData new];
-    _urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+    
+    _urlConnection = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (response) {
+            [self didReceiveURLSessionResponse:response];
+        }
+        if (data) {
+            [self didReceiveURLSessionData:data];
+        }
+        if (error) {
+            [self didFailURLSessionWithError:error];
+        }
+        else {
+            [self didFinishURLSessionLoading];
+        }
+    }];
+    [_urlConnection resume];
 }
 
 /*
@@ -483,7 +497,7 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
 #pragma mark - NSURLConnectionDelegate
 /*==================================================================================================
  */
-- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)urlResponse
+- (void)didReceiveURLSessionResponse:(NSURLResponse *)urlResponse
 {
     NSHTTPURLResponse *response = (NSHTTPURLResponse *)urlResponse;
     _statusCode = [response statusCode];
@@ -492,20 +506,20 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
     [_receivedData setLength:0];
 }
 
-- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
+- (void)didReceiveURLSessionData:(NSData *)data
 {
     [_receivedData appendData:data];
     LOG_DEBUG(@"Received %lu bytes.", data.length);
 }
 
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
+- (void)didFailURLSessionWithError:(NSError *)error
 {
     LOG_ERROR(@"Connection failed! Error - %@ %@", [error localizedDescription],
               [[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey]);
     [self _cleanupConnectionAndNotifyDelegate];
 }
 
-- (void)connectionDidFinishLoading:(NSURLConnection *)connection
+- (void)didFinishURLSessionLoading
 {
     LOG_DEBUG(@"Succeeded! Received %lu bytes of data", [_receivedData length]);
     if (_receivedData != nil && _receivedData.length > 0) {
