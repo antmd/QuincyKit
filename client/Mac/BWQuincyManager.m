@@ -422,18 +422,19 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
     NSString *boundary = @"----FOO";
 
     if (self.appIdentifier) {
-        request = [NSMutableURLRequest
-                requestWithURL:
+        NSString * appStr = [self.appIdentifier
+                             stringByAddingPercentEncodingWithAllowedCharacters:
+                                 NSCharacterSet.URLPathAllowedCharacterSet];
+        
+        request = [NSMutableURLRequest requestWithURL:
                         [NSURL URLWithString:
                                         [NSString
                                                 stringWithFormat:
-                                                        @"%@api/2/apps/%@/"
-                                                         "crashes?sdk=%@&sdk_version=%@",
-                                                        self.submissionURL,
-                                                        [self.appIdentifier
-                                                                stringByAddingPercentEscapesUsingEncoding:
-                                                                        NSUTF8StringEncoding],
-                                                        SDK_NAME, SDK_VERSION]]];
+                                                        @"%@api/2/apps/%@/crashes?sdk=%@&sdk_version=%@"
+                                                        , self.submissionURL
+                                                        , appStr
+                                                        , SDK_NAME
+                                         , SDK_VERSION]]];
     }
     else {
         request = [NSMutableURLRequest requestWithURL:url];
@@ -471,7 +472,11 @@ NSString* BWCrashLogSeparator = @"**********\n\n";
     _statusCode = 200;
 
     _receivedData = [NSMutableData new];
+    
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     _urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+#pragma clang diagnostic pop
 }
 
 /*
